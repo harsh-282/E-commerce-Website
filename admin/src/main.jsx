@@ -5,7 +5,10 @@ import axios from "axios";
 import { Gift, LayoutDashboard, PackagePlus, ShoppingCart, Users, Pencil, Trash2 } from "lucide-react";
 import "./styles.css";
 
-const API = axios.create({ baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api" });
+const apiRoot = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || "http://localhost:5050";
+const API = axios.create({
+  baseURL: apiRoot.endsWith("/api") ? apiRoot : `${apiRoot.replace(/\/$/, "")}/api`
+});
 const categories = ["Birthday Gifts", "Personalized Gifts", "Gift Hampers", "Home Decor", "Soft Toys"];
 
 function App() {
@@ -52,7 +55,7 @@ function Stat({ label, value }) {
 }
 
 function Products() {
-  const blank = { name: "", description: "", price: "", image: "", category: categories[0], stock: 10, featured: false };
+  const blank = { name: "", description: "", price: "", image: null, category: categories[0], stock: 10, featured: false };
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(blank);
   const [editing, setEditing] = useState(null);
@@ -60,12 +63,17 @@ function Products() {
   useEffect(load, []);
   const submit = async (e) => {
     e.preventDefault();
-    editing ? await API.put(`/products/${editing}`, form) : await API.post("/products", form);
+    const formData = new FormData();
+    Object.keys(form).forEach(key => {
+      if (form[key] !== null) formData.append(key, form[key]);
+    });
+    const config = { headers: { "Content-Type": "multipart/form-data" } };
+    editing ? await API.put(`/products/${editing}`, formData, config) : await API.post("/products", formData, config);
     setForm(blank); setEditing(null); load();
   };
-  const edit = (p) => { setEditing(p._id); setForm({ name: p.name, description: p.description, price: p.price, image: p.image, category: p.category, stock: p.stock, featured: p.featured }); };
+  const edit = (p) => { setEditing(p._id); setForm({ name: p.name, description: p.description, price: p.price, image: null, category: p.category, stock: p.stock, featured: p.featured }); };
   const del = async (id) => { if (confirm("Delete this product?")) { await API.delete(`/products/${id}`); load(); } };
-  return <><div className="title"><h1>Products</h1></div><section className="panel"><h2>{editing ? "Edit Product" : "Add Product"}</h2><form className="product-form" onSubmit={submit}><input required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /><input required type="number" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /><input required placeholder="Image URL" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{categories.map((c) => <option key={c}>{c}</option>)}</select><input type="number" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /><label className="check"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured</label><textarea required placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /><button>{editing ? "Update Product" : "Add Product"}</button></form></section><Table headers={["Product", "Category", "Price", "Stock", "Actions"]}>{products.map((p) => <tr key={p._id}><td><img src={p.image} />{p.name}</td><td>{p.category}</td><td>₹{p.price}</td><td>{p.stock}</td><td><button onClick={() => edit(p)}><Pencil size={16} /></button><button onClick={() => del(p._id)}><Trash2 size={16} /></button></td></tr>)}</Table></>;
+  return <><div className="title"><h1>Products</h1></div><section className="panel"><h2>{editing ? "Edit Product" : "Add Product"}</h2><form className="product-form" onSubmit={submit}><input required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /><input required type="number" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /><input type="file" accept="image/*" onChange={(e) => setForm({ ...form, image: e.target.files[0] })} required={!editing} /><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{categories.map((c) => <option key={c}>{c}</option>)}</select><input type="number" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /><label className="check"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured</label><textarea required placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /><button>{editing ? "Update Product" : "Add Product"}</button></form></section><Table headers={["Product", "Category", "Price", "Stock", "Actions"]}>{products.map((p) => <tr key={p._id}><td><img src={p.image} />{p.name}</td><td>{p.category}</td><td>₹{p.price}</td><td>{p.stock}</td><td><button type="button" onClick={() => edit(p)}><Pencil size={16} /></button><button type="button" onClick={() => del(p._id)}><Trash2 size={16} /></button></td></tr>)}</Table></>;
 }
 
 function Orders() {

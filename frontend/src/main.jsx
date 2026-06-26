@@ -5,7 +5,10 @@ import axios from "axios";
 import { Gift, ShoppingBag, User, Search, Trash2, Plus, Minus } from "lucide-react";
 import "./styles.css";
 
-const API = axios.create({ baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api" });
+const apiRoot = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || "http://localhost:5050";
+const API = axios.create({
+  baseURL: apiRoot.endsWith("/api") ? apiRoot : `${apiRoot.replace(/\/$/, "")}/api`
+});
 const categories = ["Birthday Gifts", "Personalized Gifts", "Gift Hampers", "Home Decor", "Soft Toys"];
 const AppContext = createContext();
 
