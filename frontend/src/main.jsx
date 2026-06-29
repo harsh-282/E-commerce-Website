@@ -5,7 +5,7 @@ import axios from "axios";
 import { Gift, ShoppingBag, User, Search, Trash2, Plus, Minus } from "lucide-react";
 import "./styles.css";
 
-const apiRoot = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || "http://localhost:5050";
+const apiRoot = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || "https://e-commerce-website-a444.vercel.app";
 const API = axios.create({
   baseURL: apiRoot.endsWith("/api") ? apiRoot : `${apiRoot.replace(/\/$/, "")}/api`
 });
